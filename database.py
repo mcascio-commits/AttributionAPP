@@ -197,18 +197,28 @@ SCHEMA_SQLITE = SCHEMA.replace('SERIAL PRIMARY KEY', 'INTEGER PRIMARY KEY AUTOIN
 
 def init_db():
     conn = get_db()
+    if USE_POSTGRES:
+        conn.autocommit = True
     schema = SCHEMA if USE_POSTGRES else SCHEMA_SQLITE
-    # Execute each statement separately
     statements = [s.strip() for s in schema.split(';') if s.strip()]
     cur = conn.cursor()
     for stmt in statements:
         try:
             cur.execute(stmt)
+            if not USE_POSTGRES:
+                conn.commit()
         except Exception as e:
-            if 'already exists' not in str(e).lower():
-                print(f"Warning: {e}")
-    conn.commit()
+            if not USE_POSTGRES:
+                conn.rollback()
+            msg = str(e).lower()
+            if 'already exists' not in msg and 'duplicate' not in msg:
+                print(f"Warning init_db: {e}")
+    if not USE_POSTGRES:
+        conn.commit()
+    if USE_POSTGRES:
+        conn.autocommit = False
     conn.close()
+    print("Tables créées.")
 
 def seed():
     """Insère les données initiales si la table est vide"""
@@ -220,15 +230,22 @@ def seed():
 
     from werkzeug.security import generate_password_hash
 
-    # Compte admin par défaut
-    execute(conn, "INSERT INTO utilisateurs(username,password,role) VALUES(?,?,?)",
-            ('admin', generate_password_hash('admin123'), 'admin'))
-    execute(conn, "INSERT INTO utilisateurs(username,password,role) VALUES(?,?,?)",
-            ('consultation', generate_password_hash('consult123'), 'consultation'))
+    # Comptes par défaut
+    for uname, pwd, role in [('admin','admin123','admin'),('consultation','consult123','consultation')]:
+        try:
+            execute(conn, "INSERT INTO utilisateurs(username,password,role) VALUES(?,?,?)",
+                    (uname, generate_password_hash(pwd), role))
+            conn.commit()
+        except Exception:
+            conn.rollback()
 
     # Années
     for lbl, actif in [('2023-2024',0),('2024-2025',0),('2025-2026',1)]:
-        execute(conn, "INSERT INTO annees(label,actif) VALUES(?,?)", (lbl, actif))
+        try:
+            execute(conn, "INSERT INTO annees(label,actif) VALUES(?,?)", (lbl, actif))
+            conn.commit()
+        except Exception:
+            conn.rollback()
 
     # Filières
     filieres = [
@@ -246,8 +263,12 @@ def seed():
         ('Coordination','Coordination',12,'#BA7517'),
     ]
     for nom, degre, ordre, couleur in filieres:
-        execute(conn, "INSERT INTO filieres(nom,degre,ordre,couleur) VALUES(?,?,?,?)",
-                (nom, degre, ordre, couleur))
+        try:
+            execute(conn, "INSERT INTO filieres(nom,degre,ordre,couleur) VALUES(?,?,?,?)",
+                    (nom, degre, ordre, couleur))
+            conn.commit()
+        except Exception:
+            conn.rollback()
 
     # Catégories coordination
     for i, (nom, couleur) in enumerate([
@@ -256,7 +277,11 @@ def seed():
         ('Remédiation','#7F77DD'),('Comptoir / Missions DS','#1D9E75'),
         ('Autre','#888780'),
     ]):
-        execute(conn, "INSERT INTO coord_categories(nom,ordre,couleur) VALUES(?,?,?)", (nom, i, couleur))
+        try:
+            execute(conn, "INSERT INTO coord_categories(nom,ordre,couleur) VALUES(?,?,?)", (nom, i, couleur))
+            conn.commit()
+        except Exception:
+            conn.rollback()
 
     # NTPP
     ntpp = [
@@ -272,18 +297,35 @@ def seed():
         ('Autre',1,9,None,0),
     ]
     for nom, signe, ordre, parent, val in ntpp:
-        execute(conn, "INSERT INTO ntpp_categories(nom,signe,ordre,parent_id) VALUES(?,?,?,?)",
-                (nom, signe, ordre, parent))
-        if val:
-            nid = lastid(conn, 'ntpp_categories')
-            execute(conn, "INSERT INTO ntpp_valeurs(categorie_id,annee,valeur) VALUES(?,?,?)",
-                    (nid, '2025-2026', val))
+        try:
+            if USE_POSTGRES:
+                cur = conn.cursor()
+                cur.execute("INSERT INTO ntpp_categories(nom,signe,ordre,parent_id) VALUES(%s,%s,%s,%s) RETURNING id",
+                            (nom, signe, ordre, parent))
+                nid = cur.fetchone()['id']
+                conn.commit()
+            else:
+                execute(conn, "INSERT INTO ntpp_categories(nom,signe,ordre,parent_id) VALUES(?,?,?,?)",
+                        (nom, signe, ordre, parent))
+                nid = lastid(conn, 'ntpp_categories')
+                conn.commit()
+            if val:
+                execute(conn, "INSERT INTO ntpp_valeurs(categorie_id,annee,valeur) VALUES(?,?,?)",
+                        (nid, '2025-2026', val))
+                conn.commit()
+        except Exception as ex:
+            conn.rollback()
+            print(f"Warning ntpp: {ex}")
 
     # LYSEM
-    ecole = fetchone(conn, "SELECT id FROM ntpp_categories WHERE nom='École'")
+    ecole = fetchone(conn, "SELECT id FROM ntpp_categories WHERE nom=?", ('École',))
     if ecole:
-        execute(conn, "INSERT INTO ntpp_categories(nom,signe,ordre,parent_id) VALUES(?,?,?,?)",
-                ('LYSEM', 1, 0, ecole['id']))
+        try:
+            execute(conn, "INSERT INTO ntpp_categories(nom,signe,ordre,parent_id) VALUES(?,?,?,?)",
+                    ('LYSEM', 1, 0, ecole['id']))
+            conn.commit()
+        except Exception:
+            conn.rollback()
 
     # Mail
     execute(conn, "INSERT INTO mail_config(smtp_host,smtp_port) VALUES(?,?)", ('ssl0.ovh.net', 465))

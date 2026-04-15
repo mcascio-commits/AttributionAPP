@@ -988,8 +988,21 @@ def export_excel():
     return send_file(buf, download_name=f'attributions_{annee}.xlsx', as_attachment=True,
                      mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
+# ── Initialisation au démarrage ───────────────────────────────────────────────
+# Appelé par gunicorn ET python app.py
+import atexit as _atexit
+
+def _startup():
+    os.makedirs('data', exist_ok=True)
+    try:
+        init_db()
+        seed()
+        print("Base de données prête.")
+    except Exception as e:
+        print(f"Erreur init DB: {e}")
+
+_startup()
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
-    os.makedirs('data', exist_ok=True)
-    init_db(); seed()
     app.run(debug=False, port=5000)

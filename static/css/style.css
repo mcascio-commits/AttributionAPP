@@ -191,3 +191,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);bo
 .sep{height:1px;background:var(--border);margin:6px 12px}
 .empty-row td{text-align:center;color:var(--text3);padding:14px}
 @media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+/* Pastilles colorées */
+.pill-red    { background:var(--red-pale)!important;border-color:#F09595!important;color:var(--red-dark)!important; }
+.pill-amber  { background:var(--amber-pale)!important;border-color:#FAC775!important;color:var(--amber-dark)!important; }
+.pill-green  { background:var(--green-pale)!important;border-color:var(--green-light)!important;color:var(--green-dark)!important; }
+.pill-blue   { background:var(--blue-pale)!important;border-color:#85B7EB!important;color:var(--blue-dark)!important; }
+.pill-purple { background:#EEEDFE!important;border-color:#AFA9EC!important;color:#3C3489!important; }
+
+/* Prof tooltip */
+#prof-tooltip { transition: opacity .15s; }

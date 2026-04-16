@@ -194,7 +194,8 @@ def synthese():
     conn = get_db()
     data = fetchall(conn, """
         SELECT p.id, p.acronyme, p.prenom, p.nom, p.email, p.heures_min, p.heures_max,
-               COALESCE(SUM(CASE WHEN a.heures_attr IS NOT NULL THEN a.heures_attr ELSE c.heures END),0) as total
+               COALESCE(SUM(CASE WHEN a.heures_attr IS NOT NULL THEN a.heures_attr ELSE c.heures END),0) as total,
+               COALESCE((SELECT SUM(n.heures) FROM nominations n WHERE n.personnel_id=p.id),0) as total_nomination
         FROM personnel p
         LEFT JOIN attributions a ON a.personnel_id=p.id AND a.annee=?
         LEFT JOIN cours c ON a.cours_id=c.id
@@ -278,6 +279,37 @@ def utilisateurs():
     conn.close()
     return render_template('utilisateurs.html', filieres=filieres, annees=annees,
                            annee=annee, users=users)
+
+
+# ── API Nominations ───────────────────────────────────────────────────────────
+@app.route('/api/nominations/<int:pid>')
+@login_required
+def get_nominations(pid):
+    conn = get_db()
+    noms = fetchall(conn, "SELECT * FROM nominations WHERE personnel_id=? ORDER BY matiere", (pid,))
+    conn.close()
+    return jsonify(noms)
+
+@app.route('/api/nomination', methods=['POST'])
+@login_required
+@admin_required
+def add_nomination():
+    d = request.json; conn = get_db()
+    execute(conn, "INSERT INTO nominations(personnel_id,matiere,heures,type_cours) VALUES(?,?,?,?)",
+            (d['personnel_id'], d['matiere'], d.get('heures',0), d.get('type_cours','FC')))
+    conn.commit()
+    nid = lastid(conn, 'nominations')
+    conn.close()
+    return jsonify({'ok':True,'id':nid})
+
+@app.route('/api/nomination/<int:nid>', methods=['DELETE'])
+@login_required
+@admin_required
+def del_nomination(nid):
+    conn = get_db()
+    execute(conn, "DELETE FROM nominations WHERE id=?", (nid,))
+    conn.commit(); conn.close()
+    return jsonify({'ok':True})
 
 # ── API Auth ──────────────────────────────────────────────────────────────────
 @app.route('/api/utilisateur', methods=['POST'])
@@ -479,6 +511,8 @@ def update_attribution(aid):
         execute(conn, "UPDATE attributions SET personnel_id=? WHERE id=?", (pid, aid))
     if 'heures_attr' in d:
         execute(conn, "UPDATE attributions SET heures_attr=? WHERE id=?", (d['heures_attr'], aid))
+    if 'couleur' in d:
+        execute(conn, "UPDATE attributions SET couleur=? WHERE id=?", (d['couleur'] or None, aid))
     conn.commit(); conn.close(); return jsonify({'ok':True})
 
 @app.route('/api/attribution/<int:aid>', methods=['DELETE'])
@@ -608,6 +642,9 @@ def update_classe(cid):
     d = request.json; conn = get_db()
     if 'nom' in d:
         execute(conn, "UPDATE classes SET nom=? WHERE id=?", (d['nom'].strip().upper(), cid))
+        conn.commit()
+    if 'commentaire' in d:
+        execute(conn, "UPDATE classes SET commentaire=? WHERE id=?", (d.get('commentaire') or None, cid))
         conn.commit()
     conn.close(); return jsonify({'ok':True})
 
@@ -992,16 +1029,7 @@ def export_excel():
 # Appelé par gunicorn ET python app.py
 import atexit as _atexit
 
-def _startup():
-    os.makedirs('data', exist_ok=True)
-    try:
-        init_db()
-        seed()
-        print("Base de données prête.")
-    except Exception as e:
-        print(f"Erreur init DB: {e}")
-
-_startup()
+# DB initialized by gunicorn.conf.py on_starting hook
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == '__main__':

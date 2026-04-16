@@ -28,7 +28,7 @@
         <th>Email</th><th>Statut</th>
         <th class="c" style="width:58px">Min h</th>
         <th class="c" style="width:58px">Max h</th>
-        <th class="c" style="width:44px">Actif</th>
+        <th class="c" style="width:44px">Actif</th><th style="width:80px">Nomination</th>
       </tr>
     </thead>
     <tbody>
@@ -54,6 +54,7 @@
                  onblur="savePersonnel({{ p.id }},'heures_max',parseFloat(this.value)||0)"></td>
       <td class="c"><input type="checkbox" {% if p.actif %}checked{% endif %}
                  onchange="savePersonnel({{ p.id }},'actif',this.checked?1:0)"></td>
+      <td><button class="btn btn-sm" onclick="manageNominations({{ p.id }},'{{ p.acronyme }}')">📋</button></td>
     </tr>
     {% endfor %}
     {% if not people %}

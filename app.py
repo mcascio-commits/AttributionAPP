@@ -1031,3 +1031,40 @@ import atexit as _atexit
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
     app.run(debug=False, port=5000)
+@app.route('/matieres')
+@login_required
+def matieres():
+    import re
+    from collections import defaultdict
+    annee = request.args.get('annee', annee_active())
+    conn  = get_db()
+    filieres_list = fetchall(conn, 'SELECT * FROM filieres WHERE actif=1 ORDER BY ordre')
+    annees_list   = fetchall(conn, 'SELECT * FROM annees ORDER BY label DESC')
+    all_cours = fetchall(conn, """
+        SELECT c.id, c.nom, c.heures, c.type, c.nb_groupes,
+               f.nom as filiere_nom, f.id as filiere_id, f.couleur, f.ordre as fil_ordre
+        FROM cours c JOIN filieres f ON c.filiere_id=f.id
+        WHERE f.actif=1 ORDER BY c.nom, f.ordre
+    """)
+    attrs = fetchall(conn, """
+        SELECT a.cours_id, a.groupe_num, a.heures_attr, a.couleur,
+               p.acronyme, p.prenom, p.nom as pnom, a.id as attr_id
+        FROM attributions a JOIN personnel p ON a.personnel_id=p.id
+        WHERE a.annee=?
+    """, (annee,))
+    conn.close()
+    attrs_map = {}
+    for a in attrs:
+        if a['cours_id'] not in attrs_map:
+            attrs_map[a['cours_id']] = []
+        attrs_map[a['cours_id']].append(a)
+    def normalize(nom):
+        n = re.sub(r'[0-9]+', '', nom).strip().lower()
+        n = re.sub(r'[\s/\-]+', ' ', n).strip()
+        return n
+    grouped = defaultdict(list)
+    for c in all_cours:
+        grouped[normalize(c['nom'])].append(c)
+    groups = sorted(grouped.items(), key=lambda x: x[0])
+    return render_template('matieres.html', groups=groups, attrs_map=attrs_map,
+                           filieres=filieres_list, annees=annees_list, annee=annee)

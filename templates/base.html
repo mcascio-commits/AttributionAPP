@@ -68,6 +68,7 @@ input[type="number"].input-sm, input[type="checkbox"].pcheck,
       {% endfor %}
 
       <div class="nav-div"></div>
+      <a href="/matieres?annee={{ annee }}" class="nav-item {% if request.path=='/matieres' %}active{% endif %}" style="--dot:#7F77DD"><span class="nav-dot"></span>Vue matières</a>
       <a href="/recap?annee={{ annee }}"   class="nav-item {% if request.path=='/recap' %}active{% endif %}"   style="--dot:#E24B4A"><span class="nav-dot"></span>⚠ Non attribués</a>
       <a href="/ntpp?annee={{ annee }}"    class="nav-item {% if request.path=='/ntpp' %}active{% endif %}"    style="--dot:#888780"><span class="nav-dot"></span>NTPP</a>
       <a href="/synthese?annee={{ annee }}" class="nav-item {% if request.path=='/synthese' %}active{% endif %}" style="--dot:#888780"><span class="nav-dot"></span>Synthèse</a>
@@ -88,7 +89,7 @@ input[type="number"].input-sm, input[type="checkbox"].pcheck,
 
     <div class="sb-bottom">
       {% if current_user.can_edit %}
-      <button class="nav-item" style="--dot:#BA7517" onclick="manageAnnees({{ annees|tojson }},'{{ annee }}')">
+      <button class="nav-item" style="--dot:#BA7517" onclick="manageAnnees(_annees,'{{ annee }}')">
         <span class="nav-dot"></span>Années scolaires
       </button>
       <button class="nav-item" style="--dot:#27500A" onclick="backupDB()">
@@ -115,6 +116,9 @@ input[type="number"].input-sm, input[type="checkbox"].pcheck,
 <div id="toast" class="toast"></div>
 <div id="modal-overlay" class="modal-overlay" onclick="closeModal()"></div>
 <div id="modal" class="modal"></div>
+<script>
+var _annees = {{ annees|tojson|safe }};
+</script>
 <script src="{{ url_for('static',filename='js/app.js') }}"></script>
 <script src="{{ url_for('static',filename='js/drag.js') }}"></script>
 {% if not current_user.can_edit %}

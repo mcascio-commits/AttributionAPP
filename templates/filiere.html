@@ -130,8 +130,8 @@
         <td class="c" data-attr-id="">
           {% if k in attrs_by_cours_classe %}
             {% for a in attrs_by_cours_classe[k] %}
-            <span class="pill" data-attr-id="{{ a.id }}"
-                  onclick="editAttr({{ a.id }},'{{ a.acronyme }}',{{ a.heures_attr or 'null' }},{{ c.heures }})"
+            <span class="pill {{ a.couleur or '' }}" data-attr-id="{{ a.id }}"
+                  onclick="editAttr({{ a.id }},'{{ a.acronyme }}',{{ a.heures_attr or 'null' }},{{ c.heures }},'{{ a.couleur or '' }}')"
                   title="{{ a.prenom or '' }} {{ a.pnom or '' }}">
               {{ a.acronyme }}
               {% if a.heures_attr and a.heures_attr != c.heures %}
@@ -149,7 +149,7 @@
           {% set k = (c.id, None) %}
           {% if k in attrs_by_cours_classe %}
             {% for a in attrs_by_cours_classe[k] %}
-            <span class="pill" data-attr-id="{{ a.id }}"
+            <span class="pill {{ a.couleur or "" }}" data-attr-id="{{ a.id }}"
                   onclick="editAttr({{ a.id }},'{{ a.acronyme }}',{{ a.heures_attr or 'null' }},{{ c.heures }})">
               {{ a.acronyme }}
               <span class="x" onclick="event.stopPropagation();deleteAttr({{ a.id }})">×</span>
@@ -233,7 +233,7 @@
           {% if k in attrs_by_cours_groupe %}
             <div class="grp-slot grp-ok" data-attr-id="{{ attrs_by_cours_groupe[k][0].id }}">
               {% for a in attrs_by_cours_groupe[k] %}
-              <span class="pill" data-attr-id="{{ a.id }}" style="margin:0;font-size:10px"
+              <span class="pill {{ a.couleur or "" }}" data-attr-id="{{ a.id }}" style="margin:0;font-size:10px"
                     onclick="editAttr({{ a.id }},'{{ a.acronyme }}',{{ a.heures_attr or 'null' }},{{ c.heures }})">
                 {{ a.acronyme }}
                 {% if a.heures_attr and a.heures_attr != c.heures %}
@@ -324,7 +324,7 @@
           {% if k in attrs_by_cours_groupe %}
             <div class="grp-slot grp-ok" data-attr-id="{{ attrs_by_cours_groupe[k][0].id }}">
               {% for a in attrs_by_cours_groupe[k] %}
-              <span class="pill" data-attr-id="{{ a.id }}" style="margin:0;font-size:10px"
+              <span class="pill {{ a.couleur or "" }}" data-attr-id="{{ a.id }}" style="margin:0;font-size:10px"
                     onclick="editAttr({{ a.id }},'{{ a.acronyme }}',{{ a.heures_attr or 'null' }},{{ c.heures }})">
                 {{ a.acronyme }}{% if a.heures_attr and a.heures_attr != c.heures %}<span style="font-size:9px;color:var(--amber)"> {{ a.heures_attr|int }}h</span>{% endif %}
                 <span class="x" onclick="event.stopPropagation();deleteAttr({{ a.id }})">×</span>
@@ -395,7 +395,7 @@
           {% if k in attrs_by_cours_groupe %}
             <div class="grp-slot grp-ok" data-attr-id="{{ attrs_by_cours_groupe[k][0].id }}" style="min-width:48px">
               {% for a in attrs_by_cours_groupe[k] %}
-              <span class="pill" data-attr-id="{{ a.id }}" style="margin:0;font-size:10px"
+              <span class="pill {{ a.couleur or "" }}" data-attr-id="{{ a.id }}" style="margin:0;font-size:10px"
                     onclick="editAttr({{ a.id }},'{{ a.acronyme }}',{{ a.heures_attr or 'null' }},{{ c.heures }})">
                 {{ a.acronyme }}<span class="x" onclick="event.stopPropagation();deleteAttr({{ a.id }})">×</span>
               </span>
@@ -465,7 +465,7 @@
           {% if k in attrs_by_cours_groupe %}
             <div class="grp-slot grp-ok" data-attr-id="{{ attrs_by_cours_groupe[k][0].id }}">
               {% for a in attrs_by_cours_groupe[k] %}
-              <span class="pill" data-attr-id="{{ a.id }}" style="margin:0;font-size:10px"
+              <span class="pill {{ a.couleur or "" }}" data-attr-id="{{ a.id }}" style="margin:0;font-size:10px"
                     onclick="editAttr({{ a.id }},'{{ a.acronyme }}',{{ a.heures_attr or 'null' }},{{ c.heures }})">
                 {{ a.acronyme }}<span class="x" onclick="event.stopPropagation();deleteAttr({{ a.id }})">×</span>
               </span>
@@ -539,7 +539,7 @@
           {% set k = (c.id, 1) %}
           {% if k in attrs_by_cours_groupe %}
             {% for a in attrs_by_cours_groupe[k] %}
-            <span class="pill" data-attr-id="{{ a.id }}" onclick="editAttr({{ a.id }},'{{ a.acronyme }}',{{ a.heures_attr or 'null' }},{{ c.heures }})">
+            <span class="pill {{ a.couleur or "" }}" data-attr-id="{{ a.id }}" onclick="editAttr({{ a.id }},'{{ a.acronyme }}',{{ a.heures_attr or 'null' }},{{ c.heures }},'{{ a.couleur or "" }}')">
               {{ a.acronyme }}{% if a.heures_attr and a.heures_attr != c.heures %}<span style="font-size:9px;color:var(--amber)"> {{ a.heures_attr|int }}h</span>{% endif %}
               <span class="x" onclick="event.stopPropagation();deleteAttr({{ a.id }})">×</span>
             </span>
@@ -571,7 +571,7 @@
         {% set k = (c.id, 1) %}
         {% if k in attrs_by_cours_groupe %}
           {% for a in attrs_by_cours_groupe[k] %}
-          <span class="pill" data-attr-id="{{ a.id }}" onclick="editAttr({{ a.id }},'{{ a.acronyme }}',{{ a.heures_attr or 'null' }},{{ c.heures }})">
+          <span class="pill {{ a.couleur or "" }}" data-attr-id="{{ a.id }}" onclick="editAttr({{ a.id }},'{{ a.acronyme }}',{{ a.heures_attr or 'null' }},{{ c.heures }},'{{ a.couleur or "" }}')">
             {{ a.acronyme }}{% if a.heures_attr and a.heures_attr != c.heures %}<span style="font-size:9px;color:var(--amber)"> {{ a.heures_attr|int }}h</span>{% endif %}
             <span class="x" onclick="event.stopPropagation();deleteAttr({{ a.id }})">×</span>
           </span>

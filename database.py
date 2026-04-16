@@ -138,7 +138,8 @@ CREATE TABLE IF NOT EXISTS attributions (
     personnel_id INTEGER NOT NULL REFERENCES personnel(id),
     annee        TEXT NOT NULL DEFAULT '2025-2026',
     groupe_num   INTEGER DEFAULT 1,
-    heures_attr  REAL DEFAULT NULL
+    heures_attr  REAL DEFAULT NULL,
+    couleur      TEXT DEFAULT NULL
 );
 CREATE TABLE IF NOT EXISTS eleves_options (
     id                  SERIAL PRIMARY KEY,
@@ -182,6 +183,14 @@ CREATE TABLE IF NOT EXISTS mail_templates (
     sujet TEXT NOT NULL,
     corps TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS nominations (
+    id           SERIAL PRIMARY KEY,
+    personnel_id INTEGER NOT NULL REFERENCES personnel(id),
+    matiere      TEXT NOT NULL,
+    heures       REAL DEFAULT 0,
+    type_cours   TEXT DEFAULT 'FC'
+);
+
 CREATE TABLE IF NOT EXISTS mail_envois (
     id           SERIAL PRIMARY KEY,
     personnel_id INTEGER REFERENCES personnel(id),
@@ -199,6 +208,16 @@ def init_db():
     conn = get_db()
     if USE_POSTGRES:
         conn.autocommit = True
+    # Add couleur column if missing (migration)
+    try:
+        if USE_POSTGRES:
+            conn.cursor().execute('ALTER TABLE attributions ADD COLUMN IF NOT EXISTS couleur TEXT DEFAULT NULL')
+        else:
+            conn.execute('ALTER TABLE attributions ADD COLUMN couleur TEXT DEFAULT NULL')
+        conn.commit() if not USE_POSTGRES else None
+    except Exception:
+        pass
+
     schema = SCHEMA if USE_POSTGRES else SCHEMA_SQLITE
     statements = [s.strip() for s in schema.split(';') if s.strip()]
     cur = conn.cursor()

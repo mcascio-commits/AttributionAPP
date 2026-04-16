@@ -122,7 +122,7 @@ function addProfModal(coursId, groupeNum, classeId, annee, heuresCours, onSucces
     }).then(r => {
       if (!r.ok) return toast(r.error||'Erreur','err');
       closeModal(); toast('Ajouté');
-      if (onSuccess) onSuccess(); else setTimeout(()=>location.reload(),300);
+      if (onSuccess) onSuccess(); else setTimeout(()=>window.location.href=window.location.href,300);
     });
   };
 }
@@ -146,20 +146,32 @@ function addTitulaireModal(classeId, classeNom, annee) {
     const acro = inp.value.trim().toUpperCase();
     if (!acro) return toast('Acronyme requis','err');
     api('/api/titulaire','POST',{classe_id:classeId, acronyme:acro, annee})
-      .then(r => { if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Titulaire ajouté'); setTimeout(()=>location.reload(),300); });
+      .then(r => { if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Titulaire ajouté'); setTimeout(()=>window.location.href=window.location.href,300); });
   };
 }
 
 function deleteTitulaire(id) {
-  api(`/api/titulaire/${id}`,'DELETE').then(()=>{toast('Supprimé');setTimeout(()=>location.reload(),300)});
+  api(`/api/titulaire/${id}`,'DELETE').then(()=>{toast('Supprimé');setTimeout(()=>window.location.href=window.location.href,300)});
 }
 
 // ── Attribution ───────────────────────────────────────────────────────────────
 function deleteAttr(id) {
-  api(`/api/attribution/${id}`,'DELETE').then(()=>{toast('Supprimé');setTimeout(()=>location.reload(),300)});
+  api(`/api/attribution/${id}`,'DELETE').then(()=>{toast('Supprimé');setTimeout(()=>window.location.href=window.location.href,300)});
 }
 
-function editAttr(id, acro, heuresAttr, heuresCours) {
+function editAttr(id, acro, heuresAttr, heuresCours, currentColor) {
+  const colors = [
+    {label:'Normal',    cls:''},
+    {label:'Rouge',     cls:'pill-red'},
+    {label:'Orange',    cls:'pill-amber'},
+    {label:'Vert',      cls:'pill-green'},
+    {label:'Bleu',      cls:'pill-blue'},
+    {label:'Violet',    cls:'pill-purple'},
+  ];
+  const colorBtns = colors.map(c =>
+    `<button onclick="document.querySelectorAll('.color-btn').forEach(b=>b.style.outline='');this.style.outline='2px solid var(--blue)';document.getElementById('ea-color').value='${c.cls}'"
+      class="btn btn-sm color-btn ${c.cls}" style="min-width:60px;${c.cls===currentColor?'outline:2px solid var(--blue)':''}">${c.label}</button>`
+  ).join('');
   openModal(`
     <div class="modal-title">Modifier — ${acro}</div>
     <div class="form-group">
@@ -172,6 +184,11 @@ function editAttr(id, acro, heuresAttr, heuresCours) {
       </label>
       <input id="ea-h" type="number" step="0.5" value="${heuresAttr||''}" placeholder="${heuresCours}" style="width:110px">
     </div>
+    <div class="form-group">
+      <label class="form-label">Couleur de la pastille</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${colorBtns}</div>
+      <input type="hidden" id="ea-color" value="${currentColor||''}">
+    </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal()">Annuler</button>
       <button class="btn btn-danger btn-sm" onclick="deleteAttr(${id})">Supprimer</button>
@@ -183,10 +200,11 @@ function editAttr(id, acro, heuresAttr, heuresCours) {
 }
 
 function doEditAttr(id) {
-  const acro = document.getElementById('ea-acro').value.trim().toUpperCase();
-  const h = document.getElementById('ea-h').value;
-  api(`/api/attribution/${id}`,'PUT',{acronyme:acro, heures_attr: h ? parseFloat(h) : null})
-    .then(r => { if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Mis à jour'); setTimeout(()=>location.reload(),300); });
+  const acro  = document.getElementById('ea-acro').value.trim().toUpperCase();
+  const h     = document.getElementById('ea-h').value;
+  const color = document.getElementById('ea-color')?.value || '';
+  api(`/api/attribution/${id}`,'PUT',{acronyme:acro, heures_attr: h ? parseFloat(h) : null, couleur: color})
+    .then(r => { if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Mis à jour'); setTimeout(()=>window.location.href=window.location.href,300); });
 }
 
 // ── Cours management ──────────────────────────────────────────────────────────
@@ -201,7 +219,7 @@ function editCours(id, nom, heures, type) {
       <select id="ec-type">${['FC','OPT','TT','EDPH','COORD','AC'].map(t=>`<option ${t===type?'selected':''}>${t}</option>`).join('')}</select></div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal()">Annuler</button>
-      <button class="btn btn-danger btn-sm" onclick="if(confirm('Supprimer ce cours ?'))api('/api/cours/${id}','DELETE').then(()=>{closeModal();toast('Supprimé');setTimeout(()=>location.reload(),300)})">Supprimer</button>
+      <button class="btn btn-danger btn-sm" onclick="if(confirm('Supprimer ce cours ?'))api('/api/cours/${id}','DELETE').then(()=>{closeModal();toast('Supprimé');setTimeout(()=>window.location.href=window.location.href,300)})">Supprimer</button>
       <button class="btn btn-primary" onclick="doEditCours(${id})">Enregistrer</button>
     </div>`);
   setTimeout(()=>document.getElementById('ec-nom').focus(),80);
@@ -212,7 +230,7 @@ function doEditCours(id) {
     nom: document.getElementById('ec-nom').value.trim(),
     heures: parseFloat(document.getElementById('ec-h').value)||0,
     type: document.getElementById('ec-type').value,
-  }).then(r=>{ if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Mis à jour'); setTimeout(()=>location.reload(),300); });
+  }).then(r=>{ if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Mis à jour'); setTimeout(()=>window.location.href=window.location.href,300); });
 }
 
 function addCours(filiereId) {
@@ -236,7 +254,7 @@ function doAddCours(filiereId) {
     filiere_id:filiereId, nom,
     heures: parseFloat(document.getElementById('ac-h').value)||0,
     type: document.getElementById('ac-type').value,
-  }).then(r=>{ if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Cours ajouté'); setTimeout(()=>location.reload(),300); });
+  }).then(r=>{ if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Cours ajouté'); setTimeout(()=>window.location.href=window.location.href,300); });
 }
 
 // ── Classes management ────────────────────────────────────────────────────────
@@ -264,7 +282,7 @@ function renderClassesModal(filiereId, filiereNom, classes) {
              onkeydown="if(event.key==='Enter')doAddClasse(${filiereId},'${filiereNom}')">
       <button class="btn btn-success" onclick="doAddClasse(${filiereId},'${filiereNom}')">+ Ajouter</button>
     </div>
-    <div class="modal-footer"><button class="btn" onclick="closeModal();location.reload()">Fermer</button></div>`);
+    <div class="modal-footer"><button class="btn" onclick="closeModal();window.location.href=window.location.href">Fermer</button></div>`);
 }
 
 function doAddClasse(filiereId, filiereNom) {
@@ -311,7 +329,7 @@ function doSetGroupes(coursId) {
   const nb = Math.max(1, parseInt(document.getElementById('sg-nb').value)||1);
   api(`/api/cours/${coursId}`,'PUT',{nb_groupes:nb}).then(r=>{
     if(!r.ok) return toast('Erreur','err');
-    toast(`${nb} groupe(s) configuré(s)`); closeModal(); setTimeout(()=>location.reload(),300);
+    toast(`${nb} groupe(s) configuré(s)`); closeModal(); setTimeout(()=>window.location.href=window.location.href,300);
   });
 }
 
@@ -345,7 +363,7 @@ function doAddNtppCat(signe, parentId) {
   const s = document.getElementById('nc-s') ? parseInt(document.getElementById('nc-s').value) : signe;
   if(!nom) return toast('Nom requis','err');
   api('/api/ntpp/categorie','POST',{nom,signe:s,parent_id:parentId})
-    .then(r=>{ if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Catégorie ajoutée'); setTimeout(()=>location.reload(),300); });
+    .then(r=>{ if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Catégorie ajoutée'); setTimeout(()=>window.location.href=window.location.href,300); });
 }
 
 function editNtppCat(id, nom, signe) {
@@ -366,12 +384,12 @@ function doEditNtppCat(id) {
   api(`/api/ntpp/categorie/${id}`,'PUT',{
     nom: document.getElementById('en-n').value.trim(),
     signe: parseInt(document.getElementById('en-s').value),
-  }).then(r=>{ if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Mis à jour'); setTimeout(()=>location.reload(),300); });
+  }).then(r=>{ if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Mis à jour'); setTimeout(()=>window.location.href=window.location.href,300); });
 }
 
 function deleteNtppCat(id, nom) {
   if(!confirm(`Supprimer la catégorie "${nom}" et ses valeurs ?`)) return;
-  api(`/api/ntpp/categorie/${id}`,'DELETE').then(()=>{toast('Supprimée');setTimeout(()=>location.reload(),300)});
+  api(`/api/ntpp/categorie/${id}`,'DELETE').then(()=>{toast('Supprimée');setTimeout(()=>window.location.href=window.location.href,300)});
 }
 
 function saveNtppVal(catId, val, annee) {
@@ -404,7 +422,7 @@ function renderCoordCatsModal(cats) {
         <button class="btn btn-success" onclick="doAddCoordCat()">+ Ajouter</button>
       </div>
     </div>
-    <div class="modal-footer"><button class="btn" onclick="closeModal();location.reload()">Fermer</button></div>`);
+    <div class="modal-footer"><button class="btn" onclick="closeModal();window.location.href=window.location.href">Fermer</button></div>`);
 }
 
 function doAddCoordCat() {
@@ -445,8 +463,8 @@ function manageAnnees(annees, anneeActive) {
       <span style="flex:1;font-weight:${a.actif?'600':'400'};color:${a.actif?'var(--blue-dark)':'var(--text)'}">
         ${a.label}${a.actif?' <span style="font-size:10px;background:var(--blue-pale);color:var(--blue-dark);padding:1px 7px;border-radius:10px;margin-left:4px">active</span>':''}
       </span>
-      ${!a.actif?`<button class="btn btn-sm" onclick="api('/api/annee','POST',{label:'${a.label}'}).then(()=>{toast('Activée');closeModal();location.reload()})">Activer</button>`:''}
-      ${!a.actif?`<button class="btn btn-sm btn-danger" onclick="if(confirm('Supprimer ${a.label} et toutes ses données ?'))api('/api/annee/${a.label}','DELETE').then(()=>{toast('Supprimée');closeModal();location.reload()})">Supprimer</button>`:''}
+      ${!a.actif?`<button class="btn btn-sm" onclick="api('/api/annee','POST',{label:'${a.label}'}).then(()=>{toast('Activée');closeModal();window.location.href=window.location.href})">Activer</button>`:''}
+      ${!a.actif?`<button class="btn btn-sm btn-danger" onclick="if(confirm('Supprimer ${a.label} et toutes ses données ?'))api('/api/annee/${a.label}','DELETE').then(()=>{toast('Supprimée');closeModal();window.location.href=window.location.href})">Supprimer</button>`:''}
     </div>`).join('');
   openModal(`
     <div class="modal-title">Années scolaires</div>
@@ -475,7 +493,7 @@ function doNouvelleAnnee() {
   const source = document.getElementById('na-src').value;
   const dup = document.getElementById('na-dup').checked;
   api('/api/annee/nouvelle','POST',{label,source,dupliquer:dup})
-    .then(r=>{ if(!r.ok) return toast('Erreur','err'); toast(`Année ${label} créée`); closeModal(); setTimeout(()=>location.reload(),800); });
+    .then(r=>{ if(!r.ok) return toast('Erreur','err'); toast(`Année ${label} créée`); closeModal(); setTimeout(()=>window.location.href=window.location.href,800); });
 }
 
 // ── Backup / Restore ──────────────────────────────────────────────────────────
@@ -501,7 +519,7 @@ function doRestore() {
   if(!confirm('Confirmer ? Les données actuelles seront remplacées.')) return;
   const form = new FormData(); form.append('file',file);
   fetch('/api/restore',{method:'POST',body:form}).then(r=>r.json()).then(d=>{
-    if(d.ok){toast('Restauré');closeModal();setTimeout(()=>location.reload(),1500);}
+    if(d.ok){toast('Restauré');closeModal();setTimeout(()=>window.location.href=window.location.href,1500);}
     else toast(d.error||'Erreur','err');
   });
 }
@@ -514,8 +532,126 @@ function doImportPersonnel(input) {
   fetch('/api/personnel/import',{method:'POST',body:form}).then(r=>r.json()).then(d=>{
     if(d.ok) toast(`${d.added} ajouté(s), ${d.updated} mis à jour`);
     else toast(d.error||'Erreur','err');
-    setTimeout(()=>location.reload(),1000);
+    setTimeout(()=>window.location.href=window.location.href,1000);
   });
 }
 
 
+
+// ── Tooltip prof au survol ─────────────────────────────────────────────────────
+let _tooltipTimer = null;
+let _tooltipEl    = null;
+
+function getOrCreateTooltip() {
+  if (!_tooltipEl) {
+    _tooltipEl = document.createElement('div');
+    _tooltipEl.id = 'prof-tooltip';
+    _tooltipEl.style.cssText = 'position:fixed;z-index:999;background:var(--text);color:#fff;padding:8px 12px;border-radius:var(--radius);font-size:11px;pointer-events:none;display:none;max-width:260px;line-height:1.6;box-shadow:0 4px 12px rgba(0,0,0,.2)';
+    document.body.appendChild(_tooltipEl);
+  }
+  return _tooltipEl;
+}
+
+function initTooltips() {
+  document.querySelectorAll('.pill[data-attr-id]').forEach(pill => {
+    if (pill._tooltip) return;
+    pill._tooltip = true;
+
+    pill.addEventListener('mouseenter', e => {
+      const txt = pill.textContent.replace('x','').replace('×','').trim();
+      const acro = txt.split(/\s+/)[0];
+      if (!acro || acro.length < 2) return;
+
+      _tooltipTimer = setTimeout(() => {
+        const annee = new URLSearchParams(window.location.search).get('annee') || '2025-2026';
+        fetch('/api/personnel/search?q=' + encodeURIComponent(acro))
+          .then(r => r.json()).then(results => {
+            const prof = results.find(p => p.acronyme === acro);
+            if (!prof) return;
+            fetch('/api/synthese/' + prof.id + '?annee=' + annee)
+              .then(r => r.json()).then(d => {
+                const total = d.attributions.reduce((s,a) => s + (a.h||0), 0);
+                const titu  = d.titulariats.map(t => t.filiere + '/' + t.classe).join(', ');
+                const tip   = getOrCreateTooltip();
+                tip.innerHTML =
+                  '<div style="font-weight:600;font-size:12px;margin-bottom:4px">' + acro + '</div>' +
+                  (prof.prenom ? '<div style="color:#ccc;font-size:10px">' + prof.prenom + ' ' + prof.nom + '</div>' : '') +
+                  '<div style="margin-top:5px;border-top:1px solid rgba(255,255,255,.2);padding-top:5px">' +
+                  '<span style="color:#a8d8a8">Total : ' + total + 'h</span></div>' +
+                  (titu ? '<div style="color:#fac775;font-size:10px;margin-top:3px">Titulaire : ' + titu + '</div>' : '');
+                const rect = pill.getBoundingClientRect();
+                tip.style.left    = Math.min(rect.left, window.innerWidth - 270) + 'px';
+                tip.style.top     = (rect.bottom + 6) + 'px';
+                tip.style.display = 'block';
+              });
+          });
+      }, 500);
+    });
+
+    pill.addEventListener('mouseleave', () => {
+      clearTimeout(_tooltipTimer);
+      const tip = getOrCreateTooltip();
+      tip.style.display = 'none';
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', initTooltips);
+
+// ── Nominations ────────────────────────────────────────────────────────────────
+function manageNominations(pid, acro) {
+  fetch('/api/nominations/' + pid).then(r=>r.json()).then(noms => {
+    renderNominationsModal(pid, acro, noms);
+  });
+}
+
+function renderNominationsModal(pid, acro, noms) {
+  const types = ['FC','OPT','TT','EDPH','COORD','AC'];
+  const rows = noms.length ? noms.map(n => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="flex:1;font-size:12px"><strong>${n.heures}h</strong> ${n.matiere}
+        <span class="tag tag-${n.type_cours.toLowerCase()}" style="margin-left:4px">${n.type_cours}</span>
+      </span>
+      <button class="btn btn-sm btn-danger" onclick="delNomination(${n.id},${pid},'${acro}')">✕</button>
+    </div>`).join('')
+    : '<div style="color:var(--text3);font-size:12px;padding:8px 0">Aucune nomination encodée.</div>';
+
+  // Calc total
+  const total = noms.reduce((s,n) => s + (n.heures||0), 0);
+  const totalLine = noms.length ? `<div style="font-size:11px;color:var(--text3);margin-bottom:10px">Total nommé : <strong>${total}h</strong></div>` : '';
+
+  openModal(`
+    <div class="modal-title">Nominations — ${acro}</div>
+    <div style="margin-bottom:10px">${totalLine}${rows}</div>
+    <div style="padding-top:10px;border-top:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:500;margin-bottom:8px">Ajouter une nomination</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input id="nom-mat" placeholder="Matière (ex: Mathématique)" style="width:180px">
+        <input id="nom-h" type="number" step="0.5" placeholder="h" style="width:60px">
+        <select id="nom-type">${types.map(t=>`<option>${t}</option>`).join('')}</select>
+        <button class="btn btn-success" onclick="doAddNomination(${pid},'${acro}')">+ Ajouter</button>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">Fermer</button></div>`);
+  setTimeout(()=>document.getElementById('nom-mat')?.focus(),80);
+}
+
+function doAddNomination(pid, acro) {
+  const matiere = document.getElementById('nom-mat').value.trim();
+  const heures  = parseFloat(document.getElementById('nom-h').value) || 0;
+  const type    = document.getElementById('nom-type').value;
+  if (!matiere) return toast('Matière requise','err');
+  api('/api/nomination','POST',{personnel_id:pid, matiere, heures, type_cours:type})
+    .then(r => {
+      if (!r.ok) return toast('Erreur','err');
+      toast('Nomination ajoutée');
+      fetch('/api/nominations/' + pid).then(r=>r.json()).then(noms=>renderNominationsModal(pid,acro,noms));
+    });
+}
+
+function delNomination(nid, pid, acro) {
+  api('/api/nomination/' + nid, 'DELETE').then(() => {
+    toast('Supprimée');
+    fetch('/api/nominations/' + pid).then(r=>r.json()).then(noms=>renderNominationsModal(pid,acro,noms));
+  });
+}

@@ -1,6 +1,5 @@
 import os
 
-# Port from Railway environment
 port = int(os.environ.get('PORT', 8080))
 bind = f'0.0.0.0:{port}'
 workers = 2

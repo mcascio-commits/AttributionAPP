@@ -122,7 +122,7 @@ function addProfModal(coursId, groupeNum, classeId, annee, heuresCours, onSucces
     }).then(r => {
       if (!r.ok) return toast(r.error||'Erreur','err');
       closeModal(); toast('Ajouté');
-      if (onSuccess) onSuccess(); else setTimeout(()=>window.location.href=window.location.href,300);
+      if (onSuccess) onSuccess(); else setTimeout(()=>location.reload(),300);
     });
   };
 }
@@ -145,8 +145,8 @@ function addTitulaireModal(classeId, classeNom, annee) {
   document.getElementById('titu-btn').onclick = () => {
     const acro = inp.value.trim().toUpperCase();
     if (!acro) return toast('Acronyme requis','err');
-    api('/api/titulaire','POST',{classe_id:classeId, acronyme:acro, annee})
-      .then(r => { if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Titulaire ajouté'); setTimeout(()=>window.location.href=window.location.href,300); });
+    api('/api/titulaire','POST',{classe_id:classeId, acronyme:acro, annee})setTimeout(()=>location.reload(),300);
+      .then(r => { if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Titulaire ajouté');  });
   };
 }
 
@@ -204,7 +204,7 @@ function doEditAttr(id) {
   const h     = document.getElementById('ea-h').value;
   const color = document.getElementById('ea-color')?.value || '';
   api(`/api/attribution/${id}`,'PUT',{acronyme:acro, heures_attr: h ? parseFloat(h) : null, couleur: color})
-    .then(r => { if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Mis à jour'); setTimeout(()=>window.location.href=window.location.href,300); });
+    .then(r => { if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Mis à jour'); setTimeout(()=>location.reload(),300); });
 }
 
 // ── Cours management ──────────────────────────────────────────────────────────
@@ -230,7 +230,7 @@ function doEditCours(id) {
     nom: document.getElementById('ec-nom').value.trim(),
     heures: parseFloat(document.getElementById('ec-h').value)||0,
     type: document.getElementById('ec-type').value,
-  }).then(r=>{ if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Mis à jour'); setTimeout(()=>window.location.href=window.location.href,300); });
+  }).then(r=>{ if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Mis à jour'); setTimeout(()=>location.reload(),300); });
 }
 
 function addCours(filiereId) {
@@ -254,7 +254,7 @@ function doAddCours(filiereId) {
     filiere_id:filiereId, nom,
     heures: parseFloat(document.getElementById('ac-h').value)||0,
     type: document.getElementById('ac-type').value,
-  }).then(r=>{ if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Cours ajouté'); setTimeout(()=>window.location.href=window.location.href,300); });
+  }).then(r=>{ if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Cours ajouté'); setTimeout(()=>location.reload(),300); });
 }
 
 // ── Classes management ────────────────────────────────────────────────────────
@@ -329,7 +329,7 @@ function doSetGroupes(coursId) {
   const nb = Math.max(1, parseInt(document.getElementById('sg-nb').value)||1);
   api(`/api/cours/${coursId}`,'PUT',{nb_groupes:nb}).then(r=>{
     if(!r.ok) return toast('Erreur','err');
-    toast(`${nb} groupe(s) configuré(s)`); closeModal(); setTimeout(()=>window.location.href=window.location.href,300);
+    toast(`${nb} groupe(s) configuré(s)`); closeModal(); setTimeout(()=>location.reload(),300);
   });
 }
 
@@ -363,7 +363,7 @@ function doAddNtppCat(signe, parentId) {
   const s = document.getElementById('nc-s') ? parseInt(document.getElementById('nc-s').value) : signe;
   if(!nom) return toast('Nom requis','err');
   api('/api/ntpp/categorie','POST',{nom,signe:s,parent_id:parentId})
-    .then(r=>{ if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Catégorie ajoutée'); setTimeout(()=>window.location.href=window.location.href,300); });
+    .then(r=>{ if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Catégorie ajoutée'); setTimeout(()=>location.reload(),300); });
 }
 
 function editNtppCat(id, nom, signe) {
@@ -384,7 +384,7 @@ function doEditNtppCat(id) {
   api(`/api/ntpp/categorie/${id}`,'PUT',{
     nom: document.getElementById('en-n').value.trim(),
     signe: parseInt(document.getElementById('en-s').value),
-  }).then(r=>{ if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Mis à jour'); setTimeout(()=>window.location.href=window.location.href,300); });
+  }).then(r=>{ if(!r.ok) return toast('Erreur','err'); closeModal(); toast('Mis à jour'); setTimeout(()=>location.reload(),300); });
 }
 
 function deleteNtppCat(id, nom) {

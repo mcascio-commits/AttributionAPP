@@ -1,7 +1,12 @@
 import os
 
+# Port from Railway environment
+port = int(os.environ.get('PORT', 8080))
+bind = f'0.0.0.0:{port}'
+workers = 2
+timeout = 120
+
 def on_starting(server):
-    """Runs once before workers are forked - perfect for DB init"""
     os.makedirs('data', exist_ok=True)
     try:
         from database import init_db, seed
@@ -10,6 +15,3 @@ def on_starting(server):
         print("Base de données prête.")
     except Exception as e:
         print(f"Erreur init DB: {e}")
-
-workers = 2
-timeout = 120
